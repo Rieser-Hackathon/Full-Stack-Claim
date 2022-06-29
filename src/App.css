@@ -55,3 +55,24 @@
 .claim-div label{
   color:rgb(229, 11, 29) !important;
 }
+
+.claim-amount-input{
+  width : 200px;
+  height: 50px;
+  font-size: 20px;
+  text-align: center;
+  border-style : hidden;
+  border-top-left-radius : 5px;
+  border-bottom-left-radius: 5px;
+}
+.claim-btn{
+  background-color: rgb(22, 169, 174);
+  color:rgb(246, 243, 247);
+  width : 80px;
+  height: 50px;
+  font-size: 20px;
+  text-align: center;
+  border-style : hidden;
+  border-top-right-radius : 5px;
+  border-bottom-right-radius: 5px;
+}

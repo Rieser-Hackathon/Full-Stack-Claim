@@ -9,14 +9,14 @@ import  Token  from './artifacts/contracts/Token.sol/Token.json';
 
 export default function App() {
 
-  const [amount, setAmount] = useState();
+  const [amount, setAmount] = useState(0);
   const [metaMaskAccount, setMetaMaskAccount] = useState("");
   const [balanceAmount, setBalanceAmount] = useState();
 
-  const requestAccount = async () => {
-    await window.ethereum.request({ method: 'eth_requestAccounts' });
+  // const requestAccount = async () => {
+  //   await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-  }
+  // }
 
   const getWalletState = async () => {
     
@@ -24,10 +24,12 @@ export default function App() {
     var claimAmount = document.getElementById("claimAmount");
     if (typeof window.ethereum !== 'undefined') {
       if(connetButton != null && claimAmount != null) {
-        connetButton.style.display = "none"; 
+        connetButton.style.display = "none";
         claimAmount.style.display = "block"; 
 
         const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        // console.log(account);
 
         setMetaMaskAccount(account);
 
@@ -35,20 +37,29 @@ export default function App() {
         const contract = new ethers.Contract(tokenAddress, Token.abi, provider)
         const balance = await contract.balanceOf(account);
 
-        console.log(balance);
+        // console.log(balance);
 
-        setBalanceAmount(balance);
+        setBalanceAmount(balance.toString());
 
       }
     }
   }
 
   const claim = async (amount) => {
+    
     if (typeof window.ethereum !== 'undefined') {
-      const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' })
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const contract = new ethers.Contract(tokenAddress, Token.abi, provider)
-      const balance = await contract.claim(amount);
+      if(amount >0 ){
+        const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        // console.log( provider )
+        const signer = provider.getSigner();  
+        const contract = new ethers.Contract(tokenAddress, Token.abi, signer);
+        const transaction = await contract.claim(amount);
+        await transaction.wait();
+      }else{
+        alert(" You have to enter a value greater than 0! ");
+      }
+
     }
   }
 
@@ -63,11 +74,12 @@ export default function App() {
 
             <p>Enter claim amount: <label>{balanceAmount}</label> </p>
             <input
+              className = "claim-amount-input"
               type="number" 
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-            <button id="claimBtn" className='Button' onClick={()=>claim(amount)}>connnet wallet</button>
+            <button id="claimBtn" className='claim-btn' onClick={()=>claim(amount)}>Claim</button>
         </div>
       </header>
     </div>
