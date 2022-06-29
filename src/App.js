@@ -1,7 +1,7 @@
 // import logo from './logo.svg';
 import './App.css';
 import { ethers } from "ethers";
-import { useState} from 'react';
+import { useState, useEffect} from 'react';
 import { tokenAddress} from './config';
 import  Token  from './artifacts/contracts/Token.sol/Token.json';
 // import React from 'react';
@@ -10,45 +10,55 @@ import  Token  from './artifacts/contracts/Token.sol/Token.json';
 export default function App() {
 
   const [amount, setAmount] = useState(0);
-  const [metaMaskAccount, setMetaMaskAccount] = useState("");
-  const [balanceAmount, setBalanceAmount] = useState();
+  const [metaMaskAccount, getMetaMaskAccount] = useState("");
+  const [claimableAmount, getClaimableAmount] = useState();
 
-  // const requestAccount = async () => {
-  //   await window.ethereum.request({ method: 'eth_requestAccounts' });
+  const requestAccount = async () => {
+    // await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-  // }
+    const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+    getMetaMaskAccount(account);
+
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const contract = new ethers.Contract(tokenAddress, Token.abi, provider)
+    const ClaimedAmount = await contract.getClaimAmount(account);
+
+    getClaimableAmount(ClaimedAmount.toString());
+
+  }
 
   const getWalletState = async () => {
     
     var connetButton = document.getElementById("connectBtn");
-    var claimAmount = document.getElementById("claimAmount");
+    var claimAmountDiv = document.getElementById("claimAmountDiv");
+    // plz get chainID
+    var [Prototype, PromiseState, PromiseResult] = await window.ethereum.request({method: 'eth_chainId'});
+
     if (typeof window.ethereum !== 'undefined') {
-      if(connetButton != null && claimAmount != null) {
+      if(PromiseResult == 4 && connetButton != null && claimAmountDiv != null) {
+
         connetButton.style.display = "none";
-        claimAmount.style.display = "block"; 
+        claimAmountDiv.style.display = "block"; 
 
-        const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        await requestAccount();
 
-        // console.log(account);
+      }else{
 
-        setMetaMaskAccount(account);
-
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const contract = new ethers.Contract(tokenAddress, Token.abi, provider)
-        const balance = await contract.balanceOf(account);
-
-        // console.log(balance);
-
-        setBalanceAmount(balance.toString());
+        alert("select Rinkeby network.");
 
       }
+    }else{
+
+       alert("Connect Metamask wallet");
+
     }
   }
 
   const claim = async (amount) => {
     
     if (typeof window.ethereum !== 'undefined') {
-      if(amount >0 ){
+      if(amount >0 && amount <= claimableAmount){
         const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         // console.log( provider )
@@ -56,6 +66,14 @@ export default function App() {
         const contract = new ethers.Contract(tokenAddress, Token.abi, signer);
         const transaction = await contract.claim(amount);
         await transaction.wait();
+
+        await requestAccount();
+        
+        // useEffect(() => {
+        //   setCalculation(() => count * 2);
+        // }, [ClaimedAmount]); // <- add the count variable here
+
+
       }else{
         alert(" You have to enter a value greater than 0! ");
       }
@@ -68,11 +86,11 @@ export default function App() {
     <div className="App">
       <header id = "mainHeader" className="App-header">
         <button id="connectBtn" className='Button' onClick={getWalletState}>connnet wallet</button>
-        <div id ="claimAmount"  className='claim-div'  style={{display: "none"}}>
+        <div id ="claimAmountDiv"  className='claim-div'  style={{display: "none"}}>
             <h1> My HaraHat Token (RST) </h1>
             <p> Your MetaMask Wallet account :  <label>{metaMaskAccount}</label></p>
 
-            <p>Enter claim amount: <label>{balanceAmount}</label> </p>
+            <p>The claimable amount of token : <label>{claimableAmount}</label> </p>
             <input
               className = "claim-amount-input"
               type="number" 
